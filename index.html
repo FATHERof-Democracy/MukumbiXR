@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>IV Cannulation Master - Innovation Fair Prototype</title>
+    <!-- Imports the free A-Frame WebVR engine -->
+    <script src="https://aframe.io"></script>
+    <script>
+      // Clinical State Machine Logic Tracker
+      let currentStep = 1;
+
+      AFRAME.registerComponent('cannulation-logic', {
+        init: function () {
+          const instructions = document.querySelector('#step-text');
+          const armVeins = document.querySelector('#target-veins');
+          const ivCatheter = document.querySelector('#iv-catheter');
+          const swabBox = document.querySelector('#swab-box');
+
+          // Action 1: Alcohol Swab Selection
+          swabBox.addEventListener('click', () => {
+            if (currentStep === 1) {
+              instructions.setAttribute('value', 'STEP 2: Stare at the blue ring on the upper arm to apply the Tourniquet.');
+              instructions.setAttribute('color', '#333333');
+              swabBox.setAttribute('color', '#888888'); // Gray out swab to show it was used
+              currentStep = 2;
+            }
+          });
+
+          // Action 2: Tourniquet Application Point
+          document.querySelector('#tourniquet-zone').addEventListener('click', () => {
+            if (currentStep === 2) {
+              instructions.setAttribute('value', 'STEP 3: Stare at the highlighted blue vein to insert the IV Cannula.');
+              instructions.setAttribute('color', '#333333');
+              armVeins.setAttribute('visible', 'true'); // Veins appear due to tourniquet pressure
+              currentStep = 3;
+            } else if (currentStep < 2) {
+              // TRIAGE ERROR: Tried to apply tourniquet without sanitizing
+              instructions.setAttribute('value', 'CRITICAL ERROR: Sanitize the area with the Swab first!');
+              instructions.setAttribute('color', '#ff0000');
+            }
+          });
+
+          // Action 3: Target Vein Insertion Point
+          armVeins.addEventListener('click', () => {
+            if (currentStep === 3) {
+              instructions.setAttribute('value', 'SUCCESS! Flashback observed. Catheter secured safely.');
+              instructions.setAttribute('color', '#00aa00');
+              ivCatheter.setAttribute('position', '0 1 -1.4'); // Catheter docks onto the arm
+              ivCatheter.setAttribute('color', '#ff0000'); // Shifts color to simulate flashback blood
+              currentStep = 4;
+            } else if (currentStep < 3) {
+              // TRIAGE ERROR: Puncturing before applying tourniquet
+              instructions.setAttribute('value', 'CRITICAL ERROR: Cannot puncture! Apply tourniquet first.');
+              instructions.setAttribute('color', '#ff0000');
+            }
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <!-- The Core VR Scene Container -->
+    <a-scene>
+      <a-sky color="#e0f0f5"></a-sky>
+
+      <!-- Heads-Up Display (HUD) Instructional & Error Text Panel -->
+      <a-text id="step-text" value="STEP 1: Stare at the green Alcohol Swab on the table to sanitize hands." 
+              position="-1.8 2.2 -2" color="#333333" width="4" align="center"></a-text>
+
+      <!-- The Medical Procedure / Examination Table -->
+      <a-box position="0 0.8 -1.5" width="1.8" height="0.1" depth="1.2" color="#ffffff"></a-box>
+      <a-cylinder position="0 0.4 -1.5" radius="0.05" height="0.8" color="#aaaaaa"></a-cylinder>
+
+      <!-- ========================================================================= -->
+      <!-- 3D EXTERNAL ASSET LAYER -->
+      <!-- Replace the src URL below with your copied URL from your GitHub assets folder -->
+      <!-- ========================================================================= -->
+      <a-gltf-model id="3d-patient-arm" 
+                    src="PASTE_YOUR_GLITCH_OR_GITHUB_ASSET_URL_HERE" 
+                    position="0 0.9 -1.5" 
+                    scale="1 1 1"
+                    cannulation-logic>
+      </a-gltf-model>
+
+      <!-- Low-Poly Fallback Arm Primitive (Visual guide until you upload your custom 3D model) -->
+      <a-cylinder position="0 0.9 -1.5" radius="0.08" height="1" rotation="0 0 90" color="#e0a98c"></a-cylinder>
+
+      <!-- ========================================================================= -->
+      <!-- INTERACTIVE GAZE HOTSPOTS (X Y Z coordinates) -->
+      <!-- ========================================================================= -->
+      <!-- Tourniquet Zone (Blue torus wrapped near the upper arm) -->
+      <a-torus id="tourniquet-zone" position="-0.3 0.92 -1.5" radius="0.09" radius-tubular="0.01" rotation="0 90 0" color="#0000ff" class="clickable"></a-torus>
+
+      <!-- Target Vein (Hidden by default, becomes visible when Tourniquet is activated) -->
+      <a-cylinder id="target-veins" position="0.1 0.99 -1.5" radius="0.01" height="0.3" rotation="0 0 90" color="#4ba3e3" visible="false" class="clickable"></a-cylinder>
+
+      <!-- Alcohol Swab Box (Green interaction point on the supply tray) -->
+      <a-box id="swab-box" position="0.6 0.88 -1.2" width="0.08" height="0.02" depth="0.08" color="#00ff00" class="clickable"></a-box>
+
+      <!-- IV Catheter Tool Representation -->
+      <a-cone id="iv-catheter" position="0.6 0.88 -1.4" radius-bottom="0.01" height="0.1" rotation="90 0 0" color="#ffcc00"></a-cone>
+
+      <!-- ========================================================================= -->
+      <!-- HANDS-FREE RETICLE CAMERA CONFIGURATION -->
+      <!-- ========================================================================= -->
+      
+        <a-camera>
+          <!-- fuse="true" tracks standard headset aiming. fuse-timeout="1500" triggers a selection in 1.5 seconds -->
+          <a-cursor color="#ff0000" fuse="true" fuse-timeout="1500" raycaster="objects: .clickable"
+                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1500; from: 1 1 1; to: 0.1 0.1 0.1"
+                    animation__mouseleave="property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 300; to: 1 1 1">
+          </a-cursor>
+        </a-camera>
+      
+
+    </a-scene>
+  </body>
+</html>
